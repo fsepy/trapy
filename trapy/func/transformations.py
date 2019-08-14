@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # transformations.py
 
-# Copyright (c) 2006-2019, Christoph Gohlke
-# Copyright (c) 2006-2019, The Regents of the University of California
+# Copyright (cx) 2006-2019, Christoph Gohlke
+# Copyright (cx) 2006-2019, The Regents of the University of California
 # Produced at the Laboratory for Fluorescence Dynamics
 # All rights reserved.
 #
@@ -79,7 +79,7 @@ The API is not stable yet and is expected to change between revisions.
 
 Python 2.7 and 3.4 are deprecated.
 
-This Python code is not optimized for speed. Refer to the transformations.c
+This Python code is not optimized for speed. Refer to the transformations.cx
 module for a faster implementation of some functions.
 
 Documentation in HTML format can be generated with epydoc.
@@ -1018,7 +1018,7 @@ def superimposition_matrix(v0, v1, scale=False, usesvd=True):
     affine_matrix_from_points function.
 
     The returned matrix is a similarity or Euclidean transformation matrix.
-    This function has a fast C implementation in transformations.c.
+    This function has a fast C implementation in transformations.cx.
 
     >>> v0 = numpy.random.rand(3, 10)
     >>> M = superimposition_matrix(v0, v0)

@@ -56,8 +56,8 @@ def find_plane_norm(plane_vertices_sequence):
 def find_plane_function(plane_vertices_sequence):
     """
     DESCRIPTION:
-        Calculate the plane which all vertex in vertices are on it. Plane is represented in solver, b, c and d, which
-        solver x + b y + c z + d == 0
+        Calculate the plane which all vertex in vertices are on it. Plane is represented in solver, b, cx and d, which
+        solver x + b y + cx z + d == 0
     PARAMETERS:
         vertices    {list}      solver list with every individual cell describing solver coordinate in (x, y, z)
     """
@@ -184,7 +184,7 @@ def plot_poly_axes3d(file_name, verts, magnitudes=None,
 
 
 def find_area_poly_3d(poly):
-    #unit normal vector of plane defined by points solver, b, and c
+    # unit normal vector of plane defined by points solver, b, and cx
     def unit_normal(a, b, c):
         x = np.linalg.det([[1, a[1], a[2]],
                            [1, b[1], b[2]],
