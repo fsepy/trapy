@@ -14,7 +14,7 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'README.md')
 
 setuptools.setup(
 
-    name='sfeprapy',
+    name='trapy',
 
     version='0.6.3',
 
@@ -43,17 +43,9 @@ setuptools.setup(
     long_description='Structural Fire Engineering - Probabilistic Reliability Assessment',
 
     packages=[
-        'sfeprapy', 
-        'sfeprapy.dat', 
-        'sfeprapy.mc0', 
-        'sfeprapy.mcs0', 
-        'sfeprapy.mc1', 
-        'sfeprapy.dist_fit', 
-        'sfeprapy.func',
-        'sfeprapy.func.heat_transfer_1d'
+        'trapy',
+        'trapy.func',
         ],
-
-    # entry_points={'console_scripts': ['sfeprapymc = sfeprapy.mc0.__main__:main_args']},
 
     install_requires=[
         'matplotlib>=2.2.2',
