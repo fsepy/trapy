@@ -201,7 +201,7 @@ True
 >>> is_same_transform(M, M1)
 True
 >>> v0, v1 = random_vector(3), random_vector(3)
->>> M = rotation_matrix(angle_between_vectors(v0, v1), vector_product(v0, v1))
+>>> M = rotation_matrix(angle_between(v0, v1), vector_product(v0, v1))
 >>> v2 = numpy.dot(v0, M[:3,:3].T)
 >>> numpy.allclose(unit_vector(v1), unit_vector(v2))
 True
@@ -1819,26 +1819,26 @@ def vector_product(v0, v1, axis=0):
     return numpy.cross(v0, v1, axis=axis)
 
 
-def angle_between_vectors(v0, v1, directed=True, axis=0):
+def angle_between(v0, v1, directed=True, axis=0):
     """Return angle between vectors.
 
     If directed is False, the input vectors are interpreted as undirected axes,
     i.e. the maximum angle is pi/2.
 
-    >>> a = angle_between_vectors([1, -2, 3], [-1, 2, -3])
+    >>> a = angle_between([1, -2, 3], [-1, 2, -3])
     >>> numpy.allclose(a, math.pi)
     True
-    >>> a = angle_between_vectors([1, -2, 3], [-1, 2, -3], directed=False)
+    >>> a = angle_between([1, -2, 3], [-1, 2, -3], directed=False)
     >>> numpy.allclose(a, 0)
     True
     >>> v0 = [[2, 0, 0, 2], [0, 2, 0, 2], [0, 0, 2, 2]]
     >>> v1 = [[3], [0], [0]]
-    >>> a = angle_between_vectors(v0, v1)
+    >>> a = angle_between(v0, v1)
     >>> numpy.allclose(a, [0, 1.5708, 1.5708, 0.95532])
     True
     >>> v0 = [[2, 0, 0], [2, 0, 0], [0, 2, 0], [2, 0, 0]]
     >>> v1 = [[0, 3, 0], [0, 0, 3], [0, 0, 3], [3, 3, 3]]
-    >>> a = angle_between_vectors(v0, v1, axis=1)
+    >>> a = angle_between(v0, v1, axis=1)
     >>> numpy.allclose(a, [1.5708, 1.5708, 1.5708, 0.95532])
     True
 
@@ -1938,7 +1938,7 @@ def _import_module(name, package=None, warn=True, postfix='_py', ignore='_'):
         return True
 
 
-_import_module('_transformations', __package__)
+# _import_module('_transformations', __package__)
 
 if __name__ == '__main__':
     import doctest
