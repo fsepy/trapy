@@ -1,6 +1,80 @@
 from typing import Union
-
+from matplotlib.path import Path
 import numpy as np
+
+
+def polygon_area_2d(x, y):
+    # shoelace method:
+    # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+    return 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
+
+
+def test_poly_area_2d():
+    x = [0, 10, 10, 4]
+    y = [0, 0, 5, 5]
+    assert polygon_area_2d(x, y) == 40
+
+    x = [0, 10, 10, 6, 10, 4, 0]
+    y = [0, 0, 5, 5, 10, 10, 6]
+    assert polygon_area_2d(x, y) == 82
+
+
+def points_in_polygon_2d(points, polygon):
+    path = Path(polygon)
+    return path.contains_points(points)
+
+
+def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
+    x1, x2 = np.min(polygon[:, 0]), np.max(polygon[:, 0])
+    y1, y2 = np.min(polygon[:, 1]), np.max(polygon[:, 1])
+
+    domain_area = (x2-x1)*(y2-y1)
+
+    poly_area = polygon_area_2d(polygon[:, 0], polygon[:, 1])
+
+    n_points *= (domain_area / poly_area)
+    n_points = int(n_points) + 1
+
+    a = domain_area / n_points
+
+    l = a ** 0.5
+
+    xx = np.arange(x1, x2+l, l)
+    yy = np.arange(y1, y2+l, l)
+
+    xx, yy = np.meshgrid(xx, yy)
+
+    xx = xx.flatten()
+    xx = xx.reshape(len(xx), 1)
+
+    yy = yy.flatten()
+    yy = yy.reshape(len(xx), 1)
+
+    xy = np.concatenate([xx, yy], axis=1)
+
+    return xy
+
+
+def test_scatter_in_polygon_2d():
+    # points = np.random.uniform(low=-2, high=12, size=10000).reshape(5000, 2)
+
+    x = [0, 10, 10, 6, 10, 4, 0]
+    y = [0, 0, 5, 5, 10, 10, 6]
+
+    xy = list(zip(x, y))
+
+    xy = [list(i) for i in xy]
+    polygon = np.array(xy)
+
+    xy = scatter_in_polygon_2d(polygon, 1000)
+
+    points_in_polygon_ = points_in_polygon_2d(xy, polygon)
+
+    print(np.sum(points_in_polygon_))
+
+    import matplotlib.pyplot as plt
+    plt.scatter(xy[:, 0][points_in_polygon_], xy[:, 1][points_in_polygon_])
+    plt.show()
 
 
 def unit_vector(vector: np.ndarray):
@@ -151,3 +225,7 @@ if __name__ == '__main__':
     test_angle_between()
     test_phi_parallel()
     test_phi_perpendicular()
+    test_poly_area_2d()
+
+    test_scatter_in_polygon_2d()
+
