@@ -7,9 +7,23 @@ import plotly.graph_objects as go
 def plot_3d_plotly(
         x: Union[list, np.ndarray],
         y: Union[list, np.ndarray],
-        z: Union[list, np.ndarray]
+        z: Union[list, np.ndarray],
+        v: Union[list, np.ndarray]
 ):
-    fig = go.Figure(data=[go.Scatter3d(x=x, y=y, z=z, mode='markers')])
+    data = [
+        go.Scatter3d(
+            x=x, y=y, z=z,
+            mode='markers',
+            marker=dict(
+                size=12,
+                color=v,  # set color to an array/list of desired values
+                colorscale='Viridis',  # choose a colorscale
+                opacity=1.0
+            )
+        )
+    ]
+
+    fig = go.Figure(data)
 
     return fig
 
@@ -25,5 +39,5 @@ if __name__ == '__main__':
     xyz[0:np.shape(arr)[0], 1] = arr[:, 1]
     xyz[-1, 2] = 10
 
-    my_fig = plot_3d_plotly(xyz[:, 0], xyz[:, 1], xyz[:, 2])
+    my_fig = plot_3d_plotly(xyz[:, 0], xyz[:, 1], xyz[:, 2], xyz[:, 0])
     my_fig.show()

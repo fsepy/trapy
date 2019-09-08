@@ -1,6 +1,7 @@
 from typing import Union
-from matplotlib.path import Path
+
 import numpy as np
+from matplotlib.path import Path
 
 
 def polygon_area_2d(x, y):
@@ -17,6 +18,17 @@ def test_poly_area_2d():
     x = [0, 10, 10, 6, 10, 4, 0]
     y = [0, 0, 5, 5, 10, 10, 6]
     assert polygon_area_2d(x, y) == 82
+
+
+def polygon_area_3d(x, y, z):
+    """
+    TODO: WIP
+    :param x:
+    :param y:
+    :return:
+    """
+
+    return polygon_area_2d(x, y)
 
 
 def points_in_polygon_2d(points, polygon):
@@ -39,16 +51,18 @@ def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
 
     l = a ** 0.5
 
-    xx = np.arange(x1, x2+l, l)
-    yy = np.arange(y1, y2+l, l)
+    # xx = np.arange(x1, x2+l, l)
+    # yy = np.arange(y1, y2+l, l)
+    xx = np.linspace(x1, x2, int((x2 - x1) / l) + 1, endpoint=True, dtype=np.float64)
+    yy = np.linspace(y1, y2, int((y2 - y1) / l) + 1, endpoint=True, dtype=np.float64)
 
     xx, yy = np.meshgrid(xx, yy)
 
-    xx = xx.flatten()
-    xx = xx.reshape(len(xx), 1)
+    xx = xx.flatten().reshape(xx.size, 1)
+    # xx = xx.reshape(len(xx), 1)
 
-    yy = yy.flatten()
-    yy = yy.reshape(len(xx), 1)
+    yy = yy.flatten().reshape(yy.size, 1)
+    # yy = yy.reshape(len(xx), 1)
 
     xy = np.concatenate([xx, yy], axis=1)
 
@@ -75,6 +89,25 @@ def test_scatter_in_polygon_2d():
     import matplotlib.pyplot as plt
     plt.scatter(xy[:, 0][points_in_polygon_], xy[:, 1][points_in_polygon_])
     plt.show()
+
+
+def scatter_in_polygon_3d(polygon: np.ndarray, n_points) -> np.ndarray:
+    """
+    TODO: WIP
+    :param polygon:
+    :param n_points:
+    :return:
+    """
+
+    z = np.mean(polygon[:, 2])
+
+    xy = scatter_in_polygon_2d(polygon[:, 0:2], n_points)
+
+    xyz = np.zeros(np.array(np.shape(xy)) + np.array([0, 1]), dtype=np.float64)
+    xyz[:, 0:2] = xy
+    xyz[:, 2] = z
+
+    return xyz
 
 
 def unit_vector(vector: np.ndarray):
@@ -221,11 +254,51 @@ def test_phi_parallel():
     assert np.allclose(0.1385316, np.sum(p))
 
 
+def test_1():
+    poly_0 = np.array([
+        [-5, -5, 0],
+        [5, -5, 0],
+        [5, 5, 0],
+        [-5, 5, 0]
+    ])
+    norm_0 = np.array([0, 0, 1])
+
+    poly_1 = np.array([
+        [-10, -10, 10],
+        [10, -10, 10],
+        [10, 10, 10],
+        [-10, 10, 10]
+    ])
+    norm_1 = np.array([0, 0, -1])
+
+    xyz_0 = scatter_in_polygon_3d(poly_0, 100)
+    xyz_1 = scatter_in_polygon_3d(poly_1, 1000)
+
+    norm_0_ = np.zeros_like(xyz_0)
+    norm_0_[:, :] = norm_0
+    norm_1_ = np.zeros_like(xyz_1)
+    norm_1_[:, :] = norm_1
+
+    area_0 = np.zeros((np.shape(xyz_0)[0], 1), dtype=np.float64)
+    area_0[:] = polygon_area_3d(poly_0[:, 0], poly_0[:, 1], poly_0[:, 2]) / area_0.size
+    area_1 = np.zeros((np.shape(xyz_1)[0], 1), dtype=np.float64)
+    area_1[:] = polygon_area_3d(poly_1[:, 0], poly_1[:, 1], poly_1[:, 2]) / area_1.size
+
+    xyz = np.concatenate([xyz_0, xyz_1], axis=0)
+
+    from trapy.func.vis import plot_3d_plotly
+
+    fig = plot_3d_plotly(xyz[:, 0], xyz[:, 1], xyz[:, 2], v=xyz[:, 2])
+
+    fig.show()
+
+
 if __name__ == '__main__':
-    test_angle_between()
-    test_phi_parallel()
-    test_phi_perpendicular()
-    test_poly_area_2d()
+    # test_angle_between()
+    # test_phi_parallel()
+    # test_phi_perpendicular()
+    # test_poly_area_2d()
+    #
+    # test_scatter_in_polygon_2d()
 
-    test_scatter_in_polygon_2d()
-
+    test_1()
