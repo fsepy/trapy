@@ -47,7 +47,15 @@ def phi_perpendicular_corner(W_m, H_m, S_m, multiplier=1):
     return phi*multiplier
 
 
-def four_planes(W_m, H_m, w_m, h_m):
+def four_planes(W_m: float, H_m: float, w_m: float, h_m: float) -> tuple:
+    """
+
+    :param W_m:
+    :param H_m:
+    :param w_m:
+    :param h_m:
+    :return:
+    """
 
     # COORDINATES
     o = (0, 0)
@@ -198,9 +206,9 @@ def test_phi_parallel_any_br187():
 
     # check receiver fall outside, 1st quadrant
     assert abs(phi_parallel_any_br187(*(10, 10, 20, 15, 10)) - 0.0195607021) < 1e-8
-    assert abs(phi_parallel_any_br187(*(10, 10, 20, -15, 10)) - 0.0195607021) < 1e-8
-    assert abs(phi_parallel_any_br187(*(10, 10, -20, -15, 10)) - 0.0195607021) < 1e-8
-    assert abs(phi_parallel_any_br187(*(10, 10, -20, 15, 10)) - 0.0195607021) < 1e-8
+    assert abs(phi_parallel_any_br187(*(10, 10, 20, -5, 10)) - 0.0195607021) < 1e-8
+    assert abs(phi_parallel_any_br187(*(10, 10, -10, -5, 10)) - 0.0195607021) < 1e-8
+    assert abs(phi_parallel_any_br187(*(10, 10, -10, 15, 10)) - 0.0195607021) < 1e-8
 
 
 def fire_height_drysdale(Q_kW, D_m):
@@ -233,5 +241,8 @@ def test_phi_perpendicular_br187():
 
 
 if __name__ == '__main__':
+    test_phi_perpendicular_br187()
+    test_phi_parallel_any_br187()
+
     a = fire_height_drysdale(500, 1)
     print(a)

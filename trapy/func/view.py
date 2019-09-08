@@ -1,5 +1,5 @@
 from typing import Union
-
+from matplotlib.path import Path
 import numpy as np
 from matplotlib.path import Path
 
@@ -11,6 +11,7 @@ def polygon_area_2d(x, y):
 
 
 def test_poly_area_2d():
+    """To test polygon_area_2d"""
     x = [0, 10, 10, 4]
     y = [0, 0, 5, 5]
     assert polygon_area_2d(x, y) == 40
@@ -161,8 +162,6 @@ def phi(xyz: np.ndarray, norm: np.ndarray, area: np.ndarray, indexes: np.ndarray
         # angles between the rays and normals
         a0 = angle_between(v01_[i0], n0_[i0])
         a1 = angle_between(v10_[i0], n1_[i0])
-        # a0_ = a0 / np.pi * 180
-        # a1_ = a0 / np.pi * 180
 
         # distance
         # area
@@ -174,6 +173,10 @@ def phi(xyz: np.ndarray, norm: np.ndarray, area: np.ndarray, indexes: np.ndarray
         phi_[i] = (aaa / bbb * a)
 
     return phi_
+
+
+def thermal_radiation_dose(xyz: np.ndarray, heat_flux: np.ndarray, ):
+    pass
 
 
 def test_phi_perpendicular():
