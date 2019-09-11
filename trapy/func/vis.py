@@ -15,7 +15,7 @@ def plot_3d_plotly(
             x=x, y=y, z=z,
             mode='markers',
             marker=dict(
-                size=12,
+                size=5,
                 color=v,  # set color to an array/list of desired values
                 colorscale='Viridis',  # choose a colorscale
                 opacity=1.0

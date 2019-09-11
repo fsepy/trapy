@@ -198,8 +198,38 @@ class Rectangle:
         return f'<Type={type}, Geometry={geometry}, Name={name}, Temperature={temperature}, Reverse={reverse}, Emissivity={emissivity}>'
 
 
-def w3_emitter():
+def array_windows(
+        x: list,
+        z: list,
+        h: list,
+        w: list,
+        temperature: list,
+        angle: float,
+        local2global_xyz: np.ndarray = [0, 0, 0]
+) -> list:
 
+    p_ = list()
+
+    for i, cx in enumerate(x):
+        z_ = z[i]
+        h_ = h[i]
+        w_ = w[i]
+        p = Rectangle()
+        p.name = f'w3_1_{i}'
+        p.local_vertex_1 = [cx - w_ / 2, 0, z_ - h_ / 2]
+        p.local_vertex_2 = [cx + w_ / 2, 0, z_ + h_ / 2]
+        p.local2global_rotation_axis = [0, 0, 1]
+        p.local2global_rotation_angle = angle
+        p.local2global_xyz = local2global_xyz
+        p.local2global_vertices()
+        p.type = 'Emitter'
+        p.is_reverse = True
+        p.temperature = temperature[i]
+        p_.append(p)
+
+    return p_
+
+def w3_emitter():
     """
     Type=Emitter
     Geometry=5:0:0 * 10.2:0:0 * 10.2:-1.47:5.39 * 5:-1.47:5.39
@@ -213,100 +243,103 @@ def w3_emitter():
     angle = (180 + 90 + 9.5) / 180 * np.pi
 
     # w3 - level 0
-    edges__ = [-5.4] + list(np.arange(0, 45 + 0.1, 3))
-    height__ = np.full((len(edges__)-1,), 3.5)
-    height__[0] = 3.7
-    temperature__ = np.full_like(height__, fill_value=1105, dtype=float)
-    temperature__[[1, 3, 5, 8, 9, 12, 14]] = 1105.
-    p_w3_l0 = list()
-    for i, height in enumerate(height__):
-        p = Rectangle()
-        p.name = f'w3_0_{i}'
-        p.local_vertex_1 = [edges__[i], 0, 0]
-        p.local_vertex_2 = [edges__[i+1], 0, height]
-        p.local2global_rotation_axis = [0, 0, 1]
-        p.local2global_rotation_angle = angle
-        p.local2global_xyz = [0, 0, 0]
-        p.temperature = temperature__[i]
-        p.local2global_vertices()
-        p.type = 'Emitter'
-        p.is_reverse = True
-        p_w3_l0.append(p)
+    x = [1.5, 1 * 6 + 1.5, 2 * 6 + 1.5, 4 * 6, 6 * 6 - 1.5, 7 * 6 - 1.5]
+    x = [1.5, 1 * 6 + 1.5, 2 * 6 + 1.5, 4 * 6, 6 * 6 - 1.5]
+    z = [1.75, 1.75, 1.75, 1.75, 1.75, 1.75]
+    w = [3, 3, 3, 6, 3, 3]
+    h = [3.5, 3.5, 3.5, 3.5, 3.5, 3.5]
+    t = np.full_like(x, 1105)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
 
-    for p in p_w3_l0:
-        # print(p.name , p.global_vertex_1, p.global_vertex_2)
-        print(p.get_tra_command())
+    # w3 - level 1 timber facade
+    x = [0.75, 3.75, 6.75, 9.75, 12.75, 15.75, 32.25, 35.25, 38.25, 41.25, 44.25]
+    z = np.full_like(x, 4.25+3.55/2)
+    w = np.full_like(x, 1.5)
+    h = np.full_like(x, 3.55)
+    t = np.full_like(x, 931)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
 
-    # w3 - level 1
-    cx__ = list(np.arange(2.25, 3 * 6, 3)) + list(np.arange(30.75, 16 * 3, 3))
-    cx__[-1] = 15 * 3 + 1.5
-    cz__ = list(np.full((6,), 4.25 + 2.25)) + list(np.full((6,), 4.25 + 1.75))
-    cz__[-1] = 4.25 + 4.2 / 2
-    width__ = np.full_like(cx__, 1.5)
-    width__[-1] = 3
-    height__ = np.full_like(cx__, 2.5)
-    height__[6:] = 3.5
-    height__[-1] = 4.2
-    temperature__ = np.full_like(cx__, 1105)
-    p_w3_l1 = list()
-    for i, cx in enumerate(cx__):
-        cz = cz__[i]
-        h = height__[i]
-        w = width__[i]
-        p = Rectangle()
-        p.name = f'w3_1_{i}'
-        p.local_vertex_1 = [cx - w / 2, 0, cz - h / 2]
-        p.local_vertex_2 = [cx + w / 2, 0, cz + h / 2]
-        p.local2global_rotation_axis = [0, 0, 1]
-        p.local2global_rotation_angle = angle
-        p.local2global_xyz = [0, 0, 0]
-        p.local2global_vertices()
-        p.type = 'Emitter'
-        p.is_reverse = True
-        p.temperature = temperature__[i]
-        p_w3_l1.append(p)
+    # w3 - level 1 window
+    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 30.75, 33.75, 36.75, 39.75, 42.75, 46.5]
+    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 30.75, 33.75, 36.75]
+    z = np.full_like(x, 4.25+3.55/2)
+    w = np.full_like(x, 1.5)
+    w[-1] = 3
+    h = np.full_like(x, 3.55)
+    t = np.full_like(x, 1105)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
 
-    for p in p_w3_l1:
-        # print(p.name , p.global_vertex_1, p.global_vertex_2)
-        print(p.get_tra_command())
+    # w3 - level 1 soffit timber
+    x = [9, 5*6+5*3/2]
+    z = np.full_like(x, 4.25+3.55+1.45/2)
+    w = [3*6, 5*3]
+    h = np.full_like(x, 1.45)
+    t = np.full_like(x, 931)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
 
-    # w3 - level 2
-    cx__ = list(np.arange(2.25, 3 * 6, 3)) + list(np.arange(30.75, 16 * 3, 3))
-    cz__ = list(np.full((12,), 8.5 + 1.75))
-    width__ = np.full_like(cx__, 1.5)
-    height__ = np.full_like(cx__, 3.5)
-    temperature__ = np.full_like(cx__, 1105)
-    p_w3_l2 = list()
-    for i, cx in enumerate(cx__):
-        cz = cz__[i]
-        h = height__[i]
-        w = width__[i]
-        p = Rectangle()
-        p.name = f'w3_2_{i}'
-        p.local_vertex_1 = [cx - w / 2, 0, cz - h / 2]
-        p.local_vertex_2 = [cx + w / 2, 0, cz + h / 2]
-        p.local2global_rotation_axis = [0, 0, 1]
-        p.local2global_rotation_angle = angle
-        p.local2global_xyz = [0, 0, 0]
-        p.local2global_vertices()
-        p.type = 'Emitter'
-        p.is_reverse = True
-        p.temperature = temperature__[i]
-        p_w3_l2.append(p)
+    # w3 - level 2 timber facade
+    x = [0.75, 3.75, 6.75, 9.75, 12.75, 15.75, 32.25, 35.25, 38.25, 41.25, 44.25, 47.25]
+    z = np.full_like(x, 8.5+3.55/2)
+    w = np.full_like(x, 1.5)
+    h = np.full_like(x, 3.55)
+    t = np.full_like(x, 931)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
 
-    for p in p_w3_l2:
-        # print(p.name, p.global_vertex_1, p.global_vertex_2)
-        print(p.get_tra_command())
+    # w3 - level 2 window
+    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 24, 30.75, 33.75, 36.75, 39.75, 42.75, 45.75]
+    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 24, 30.75, 33.75, 36.75]
+    z = np.full_like(x, 8.5+3.55/2)
+    w = np.full_like(x, 1.5)
+    w[6] = 12  # to add the central windows
+    h = np.full_like(x, 3.55)
+    t = np.full_like(x, 1105)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
+
+    # w3 - level 2 soffit timber
+    x = [9, 5*6+3*6/2]
+    z = np.full_like(x, 8.5+3.55+1.45/2)
+    w = [3*6, 3*6]
+    h = np.full_like(x, 1.45)
+    t = np.full_like(x, 931)
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    [print(p.get_tra_command()) for p in p_]
+
+    # w2 - recessed windows
+    # x = [24]
+    # z = np.full_like(x, 4.25+3.55/2)
+    # w = np.full_like(x, 6)
+    # h = np.full_like(x, 3.55)
+    # t = np.full_like(x, 1105)
+    # local2global_xyz = np.array([0, -45, 0])
+    # p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    # [print(p.get_tra_command()) for p in p_]
+
+    # w3 - far end bit
+    angle = (180 + 90 + 75) / 180 * np.pi
+    x = [5.75/2,    ]
+    z = [3.5/2,     ]
+    w = [5.75,      ]
+    h = [3.5,       ]
+    t = np.full_like(x, 1105)
+    local2global_xyz = np.array([7.8, -45, 0])
+    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle, local2global_xyz=local2global_xyz)
+    [print(p.get_tra_command()) for p in p_]
 
 
 def w3_receiver():
     angle = (180 + 90 + 9.5) / 180 * np.pi
 
     # w3 - receiver
-    cx__ = [55 / 2]
+    cx__ = [13.5 / 2]
     cz__ = [15 / 2]
     width__ = np.full_like(cx__, 55)
-    height__ = np.full_like(cx__, 15)
+    height__ = np.full_like(cx__, 13.5)
     temperature__ = np.full_like(cx__, 293.15)
     p_w3_lm = list()
     for i, cx in enumerate(cx__):
@@ -337,9 +370,9 @@ def w2_receiver():
 
     # w2 - receiver
     cx__ = [54 / 2]
-    cz__ = [30 / 2]
+    cz__ = [13.5 / 2]
     width__ = np.full_like(cx__, 54)
-    height__ = np.full_like(cx__, 30)
+    height__ = np.full_like(cx__, 13.5)
     temperature__ = np.full_like(cx__, 293.15)
     p_w2_all = list()
     for i, cx in enumerate(cx__):
@@ -400,8 +433,8 @@ def w2_emitter():
 
 
 if __name__ == '__main__':
-    # w3_emitter()
-    # w2_receiver()
-    #
-    w3_receiver()
-    w2_emitter()
+    w3_emitter()
+    w2_receiver()
+
+    # w3_receiver()
+    # w2_emitter()

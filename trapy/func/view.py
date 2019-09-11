@@ -7,7 +7,7 @@ from matplotlib.path import Path
 def polygon_area_2d(x, y):
     # shoelace method:
     # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
-    return 0.5*np.abs(np.dot(x,np.roll(y,1))-np.dot(y,np.roll(x,1)))
+    return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
 
 def test_poly_area_2d():
@@ -41,7 +41,7 @@ def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
     x1, x2 = np.min(polygon[:, 0]), np.max(polygon[:, 0])
     y1, y2 = np.min(polygon[:, 1]), np.max(polygon[:, 1])
 
-    domain_area = (x2-x1)*(y2-y1)
+    domain_area = (x2 - x1) * (y2 - y1)
 
     poly_area = polygon_area_2d(polygon[:, 0], polygon[:, 1])
 
@@ -92,7 +92,7 @@ def test_scatter_in_polygon_2d():
     plt.show()
 
 
-def scatter_in_polygon_3d(polygon: np.ndarray, n_points) -> np.ndarray:
+def scatter_in_polygon_3d(polygon: np.ndarray, n_points: float) -> np.ndarray:
     """
     TODO: WIP
     :param polygon:
@@ -173,6 +173,46 @@ def phi(xyz: np.ndarray, norm: np.ndarray, area: np.ndarray, indexes: np.ndarray
         phi_[i] = (aaa / bbb * a)
 
     return phi_
+
+
+def resultant_heat_flux(xyz: np.ndarray, norm: np.ndarray, area: np.ndarray, temperature: np.ndarray, indexes: np.ndarray):
+    xyz0 = xyz[indexes.astype(dtype=int)[:, 0]]
+    xyz1 = xyz[indexes.astype(dtype=int)[:, 1]]
+
+    n0_ = norm[indexes.astype(dtype=int)[:, 0]]
+    n1_ = norm[indexes.astype(dtype=int)[:, 1]]
+
+    a_min_b = xyz0 - xyz1
+    d_square = np.einsum("ij,ij->i", a_min_b, a_min_b)
+
+    v01_ = xyz1 - xyz0
+    v10_ = xyz0 - xyz1
+
+    heat_flux_dosage = np.zeros((len(indexes),), dtype=np.float64)
+
+    for i, v in enumerate(indexes):
+        i0, i1 = int(v[0]), int(v[1])
+
+        # angles between the rays and normals
+        a0 = angle_between(v01_[i0], n0_[i0])
+        a1 = angle_between(v10_[i0], n1_[i0])
+
+        # area
+        a = area[i0]
+
+        # view factor
+        aaa = np.cos(a0) * np.cos(a1)
+        bbb = np.pi * d_square[i0]
+        phi = (aaa / bbb * a)
+
+        # temperature difference
+        t0 = temperature[i0]
+        t1 = temperature[i1]
+        dt4 = t0**4 - t1**4
+
+        heat_flux_dosage[i] = 5.67e-8 * 1.0 * dt4 * phi
+
+    return heat_flux_dosage
 
 
 def thermal_radiation_dose(xyz: np.ndarray, heat_flux: np.ndarray, ):
@@ -257,43 +297,71 @@ def test_phi_parallel():
     assert np.allclose(0.1385316, np.sum(p))
 
 
-def test_1():
-    poly_0 = np.array([
-        [-5, -5, 0],
-        [5, -5, 0],
-        [5, 5, 0],
-        [-5, 5, 0]
-    ])
-    norm_0 = np.array([0, 0, 1])
+def single_receiver(ep: list = None, receiver: list = None):
+    """
 
-    poly_1 = np.array([
-        [-10, -10, 10],
-        [10, -10, 10],
-        [10, 10, 10],
-        [-10, 10, 10]
-    ])
-    norm_1 = np.array([0, 0, -1])
+    :param ep: list of emitter polygon/panel
+    :param receiver: coordinate of the receiver point shape (3,)
+    :return:
+    """
 
-    xyz_0 = scatter_in_polygon_3d(poly_0, 100)
-    xyz_1 = scatter_in_polygon_3d(poly_1, 1000)
+    # required parameters
+    ep = list()
+    norm = list()
+    temperature = list()
+    ep.append(
+        [
+            [-10, -10, 10],
+            [10, -10, 10],
+            [10, 10, 10],
+            [-10, 10, 10]
+        ]
+    )
+    ep = np.asarray(ep)
+    norm.append([0, 0, -1])
+    temperature.append([1000.])
 
-    norm_0_ = np.zeros_like(xyz_0)
-    norm_0_[:, :] = norm_0
-    norm_1_ = np.zeros_like(xyz_1)
-    norm_1_[:, :] = norm_1
+    ep_xyz = None  # coordinates of sample points on emitter polygons
+    ep_xyz_norm = None
+    ep_xyz_temperature = None
+    ep_xyz_area = None
+    for i, p in enumerate(ep):
+        xyz_ = scatter_in_polygon_3d(polygon=p, n_points=100)
+        norm_ = np.zeros_like(xyz_)
+        temperature_ = np.zeros(shape=(len(xyz_),))
 
-    area_0 = np.zeros((np.shape(xyz_0)[0], 1), dtype=np.float64)
-    area_0[:] = polygon_area_3d(poly_0[:, 0], poly_0[:, 1], poly_0[:, 2]) / area_0.size
-    area_1 = np.zeros((np.shape(xyz_1)[0], 1), dtype=np.float64)
-    area_1[:] = polygon_area_3d(poly_1[:, 0], poly_1[:, 1], poly_1[:, 2]) / area_1.size
+        if ep_xyz:
+            pass
+            # ep_xyz = np.concatenate([ep_xyz, xyz_])
+        else:
+            ep_xyz = xyz_
+            ep_xyz_norm = np.zeros_like(xyz_, dtype=np.float64)
+            ep_xyz_norm[:, :] = norm[i]
+            ep_xyz_temperature = np.zeros(shape=(len(xyz_),), dtype=np.float64)
+            ep_xyz_temperature[:] = temperature[i]
+            ep_xyz_area = np.zeros((np.shape(xyz_)[0],), dtype=np.float64)
+            ep_xyz_area[:] = polygon_area_3d(p[:, 0], p[:, 1], p[:, 2]) / ep_xyz_area.size
 
-    xyz = np.concatenate([xyz_0, xyz_1], axis=0)
+    # add the single hot spot (i.e. receiver)
+    ep_xyz = np.concatenate([np.array([[0, 0, 0]]), ep_xyz])
+    ep_xyz_norm = np.concatenate([np.array([[0, 0, 1]]), ep_xyz_norm])
+    ep_xyz_temperature = np.concatenate([[293.15], ep_xyz_temperature])
+    ep_xyz_area = np.concatenate([[1], ep_xyz_area])
 
-    from trapy.func.vis import plot_3d_plotly
+    indexes = np.zeros((len(ep_xyz)-1, 2), dtype=int)
+    indexes[:, 0] = np.arange(1, len(ep_xyz), 1)
+    indexes[:, 1] = 0
 
-    fig = plot_3d_plotly(xyz[:, 0], xyz[:, 1], xyz[:, 2], v=xyz[:, 2])
-
-    fig.show()
+    resultant_heat_flux(
+        xyz=ep_xyz,
+        norm=ep_xyz_norm,
+        temperature=ep_xyz_temperature,
+        area=ep_xyz_area,
+        indexes=indexes
+    )
+    # xyz = np.concatenate([xyz_0, xyz_1], axis=0)
+    # from trapy.func.vis import plot_3d_plotly
+    # fig = plot_3d_plotly(xyz[:, 0], xyz[:, 1], xyz[:, 2], v=xyz[:, 2])
 
 
 if __name__ == '__main__':
@@ -304,4 +372,4 @@ if __name__ == '__main__':
     #
     # test_scatter_in_polygon_2d()
 
-    test_1()
+    single_receiver()
