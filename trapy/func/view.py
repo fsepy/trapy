@@ -37,6 +37,25 @@ def points_in_polygon_2d(points, polygon):
     return path.contains_points(points)
 
 
+def points_in_polygon_3d(xyz, polygon):
+    """
+    TODO: WIP
+    :param polygon:
+    :param n_points:
+    :return:
+    """
+
+    z = np.mean(polygon[:, 2])
+
+    xy = scatter_in_polygon_2d(polygon[:, 0:2], n_points)
+
+    xyz = np.zeros(np.array(np.shape(xy)) + np.array([0, 1]), dtype=np.float64)
+    xyz[:, 0:2] = xy
+    xyz[:, 2] = z
+
+    return xyz
+
+
 def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
     x1, x2 = np.min(polygon[:, 0]), np.max(polygon[:, 0])
     y1, y2 = np.min(polygon[:, 1]), np.max(polygon[:, 1])
@@ -52,18 +71,14 @@ def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
 
     l = a ** 0.5
 
-    # xx = np.arange(x1, x2+l, l)
-    # yy = np.arange(y1, y2+l, l)
     xx = np.linspace(x1, x2, int((x2 - x1) / l) + 1, endpoint=True, dtype=np.float64)
     yy = np.linspace(y1, y2, int((y2 - y1) / l) + 1, endpoint=True, dtype=np.float64)
 
     xx, yy = np.meshgrid(xx, yy)
 
     xx = xx.flatten().reshape(xx.size, 1)
-    # xx = xx.reshape(len(xx), 1)
 
     yy = yy.flatten().reshape(yy.size, 1)
-    # yy = yy.reshape(len(xx), 1)
 
     xy = np.concatenate([xx, yy], axis=1)
 
@@ -86,10 +101,6 @@ def test_scatter_in_polygon_2d():
     points_in_polygon_ = points_in_polygon_2d(xy, polygon)
 
     print(np.sum(points_in_polygon_))
-
-    import matplotlib.pyplot as plt
-    plt.scatter(xy[:, 0][points_in_polygon_], xy[:, 1][points_in_polygon_])
-    plt.show()
 
 
 def scatter_in_polygon_3d(polygon: np.ndarray, n_points: float) -> np.ndarray:
@@ -303,10 +314,10 @@ def test_phi_parallel():
 def test_single_receiver():
     ep = [
         [
-            [-10, -10, 10],
-            [10, -10, 10],
-            [10, 10, 10],
-            [-10, 10, 10],
+            [-0.05, -0.05, 0.25],
+            [0.05, -0.05, 0.25],
+            [0.05, 0.05, 0.25],
+            [-0.5, 0.05, 0.25],
         ],
     ]
     ep_norm = [
@@ -316,9 +327,9 @@ def test_single_receiver():
         [1104.],
     ]
 
-    n_points = 1000
+    n_points = 36
 
-    rp = [[0, 0, -10]]
+    rp = [[0, 0, 0]]
     rp_norm = [[0, 0, 1]]
     rp_temperature = [293.15]
 
@@ -357,6 +368,8 @@ def single_receiver(
     ep_xyz_area = None
     for i, p in enumerate(ep):
         xyz_ = scatter_in_polygon_3d(polygon=p, n_points=n_points)
+        xyz_ = points_in_polygon_2d(xy, polygon)
+
         norm_ = np.zeros_like(xyz_)
         temperature_ = np.zeros(shape=(len(xyz_),))
 
@@ -394,9 +407,10 @@ def single_receiver(
 
     print('heat flux', np.sum(res)/1000)
     print('phi', np.sum(phi_))
-    # from trapy.func.vis import plot_3d_plotly
-    # fig = plot_3d_plotly(ep_xyz[:, 0], ep_xyz[:, 1], ep_xyz[:, 2], v=ep_xyz[:, 2])
-    # fig.show()
+
+    from trapy.func.vis import plot_3d_plotly
+    my_fig = plot_3d_plotly(ep_xyz[:, 0], ep_xyz[:, 1], ep_xyz[:, 2], phi_)
+    my_fig.show()
     return res, phi_
 
 
