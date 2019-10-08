@@ -21,39 +21,9 @@ def test_poly_area_2d():
     assert polygon_area_2d(x, y) == 82
 
 
-def polygon_area_3d(x, y, z):
-    """
-    TODO: WIP
-    :param x:
-    :param y:
-    :return:
-    """
-
-    return polygon_area_2d(x, y)
-
-
 def points_in_polygon_2d(points, polygon):
     path = Path(polygon)
     return path.contains_points(points)
-
-
-def points_in_polygon_3d(xyz, polygon):
-    """
-    TODO: WIP
-    :param polygon:
-    :param n_points:
-    :return:
-    """
-
-    z = np.mean(polygon[:, 2])
-
-    xy = scatter_in_polygon_2d(polygon[:, 0:2], n_points)
-
-    xyz = np.zeros(np.array(np.shape(xy)) + np.array([0, 1]), dtype=np.float64)
-    xyz[:, 0:2] = xy
-    xyz[:, 2] = z
-
-    return xyz
 
 
 def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
@@ -101,25 +71,6 @@ def test_scatter_in_polygon_2d():
     points_in_polygon_ = points_in_polygon_2d(xy, polygon)
 
     print(np.sum(points_in_polygon_))
-
-
-def scatter_in_polygon_3d(polygon: np.ndarray, n_points: float) -> np.ndarray:
-    """
-    TODO: WIP
-    :param polygon:
-    :param n_points:
-    :return:
-    """
-
-    z = np.mean(polygon[:, 2])
-
-    xy = scatter_in_polygon_2d(polygon[:, 0:2], n_points)
-
-    xyz = np.zeros(np.array(np.shape(xy)) + np.array([0, 1]), dtype=np.float64)
-    xyz[:, 0:2] = xy
-    xyz[:, 2] = z
-
-    return xyz
 
 
 def unit_vector(vector: np.ndarray):
