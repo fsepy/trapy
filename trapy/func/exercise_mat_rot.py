@@ -243,14 +243,14 @@ def w3_emitter():
     angle = (180 + 90 + 9.5) / 180 * np.pi
 
     # w3 - level 0
-    x = [1.5, 1 * 6 + 1.5, 2 * 6 + 1.5, 4 * 6, 6 * 6 - 1.5, 7 * 6 - 1.5]
-    x = [1.5, 1 * 6 + 1.5, 2 * 6 + 1.5, 4 * 6, 6 * 6 - 1.5]
-    z = [1.75, 1.75, 1.75, 1.75, 1.75, 1.75]
-    w = [3, 3, 3, 6, 3, 3]
-    h = [3.5, 3.5, 3.5, 3.5, 3.5, 3.5]
-    t = np.full_like(x, 1105)
-    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
-    [print(p.get_tra_command()) for p in p_]
+    # x = [1.5, 1 * 6 + 1.5, 2 * 6 + 1.5, 4 * 6, 6 * 6 - 1.5, 7 * 6 - 1.5]
+    # x = [1.5, 1 * 6 + 1.5, 2 * 6 + 1.5, 4 * 6, 6 * 6 - 1.5]
+    # z = [1.75, 1.75, 1.75, 1.75, 1.75, 1.75]
+    # w = [3, 3, 3, 6, 3, 3]
+    # h = [3.5, 3.5, 3.5, 3.5, 3.5, 3.5]
+    # t = np.full_like(x, 1105)
+    # p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle)
+    # [print(p.get_tra_command()) for p in p_]
 
     # w3 - level 1 timber facade
     x = [0.75, 3.75, 6.75, 9.75, 12.75, 15.75, 32.25, 35.25, 38.25, 41.25, 44.25]
@@ -263,7 +263,7 @@ def w3_emitter():
 
     # w3 - level 1 window
     x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 30.75, 33.75, 36.75, 39.75, 42.75, 46.5]
-    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 30.75, 33.75, 36.75]
+    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 30.75, 33.75, 36.75, 39.75, 42.75,]  # fire rate 1 windows
     z = np.full_like(x, 4.25+3.55/2)
     w = np.full_like(x, 1.5)
     w[-1] = 3
@@ -292,7 +292,7 @@ def w3_emitter():
 
     # w3 - level 2 window
     x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 24, 30.75, 33.75, 36.75, 39.75, 42.75, 45.75]
-    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 24, 30.75, 33.75, 36.75]
+    x = [2.25, 5.25, 8.25, 11.25, 14.25, 17.25, 24, 30.75, 33.75, 36.75, 39.75, 42.75,]  # fire rate the end three
     z = np.full_like(x, 8.5+3.55/2)
     w = np.full_like(x, 1.5)
     w[6] = 12  # to add the central windows
@@ -321,15 +321,15 @@ def w3_emitter():
     # [print(p.get_tra_command()) for p in p_]
 
     # w3 - far end bit
-    angle = (180 + 90 + 75) / 180 * np.pi
-    x = [5.75/2,    ]
-    z = [3.5/2,     ]
-    w = [5.75,      ]
-    h = [3.5,       ]
-    t = np.full_like(x, 1105)
-    local2global_xyz = np.array([7.8, -45, 0])
-    p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle, local2global_xyz=local2global_xyz)
-    [print(p.get_tra_command()) for p in p_]
+    # angle = (180 + 90 + 75) / 180 * np.pi
+    # x = [5.75/2,    ]
+    # z = [3.5/2,     ]
+    # w = [5.75,      ]
+    # h = [3.5,       ]
+    # t = np.full_like(x, 1105)
+    # local2global_xyz = np.array([7.8, -45, 0])
+    # p_ = array_windows(x=x, z=z, w=w, h=h, temperature=t, angle=angle, local2global_xyz=local2global_xyz)
+    # [print(p.get_tra_command()) for p in p_]
 
 
 def w3_receiver():
