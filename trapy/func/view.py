@@ -21,22 +21,50 @@ def test_poly_area_2d():
     assert polygon_area_2d(x, y) == 82
 
 
-def points_in_polygon_2d(points, polygon):
-    path = Path(polygon)
-    return path.contains_points(points)
+def polygon_area_3d(polygon: np.ndarray) -> np.ndarray:
+    """
+
+    :param polygon:
+    :param n_points:
+    :return:
+    """
+
+    z_averaged = np.average(polygon[:, 2])
+
+    xy = polygon_area_2d(polygon[:, 0], polygon[:, 1])
+
+    xyz = np.c_[xy, np.full(np.shape(xy)[0], z_averaged)]
+
+    return xyz
 
 
-def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
+def scatter_in_polygon_2d(polygon: np.ndarray, n_points: int) -> np.ndarray:
+    """Cast n_points number of points on a surface, within a defined polygon, in 2 dimensional space.
+
+    :param polygon:     [[x0, y0], [x1, y1], [x2, y2], ... [xn, yn]], each item polygon[i, :] is a point in a 2d space
+                        and all points forms a polygon.
+    :param n_points:    number of dots to be casted onto the surface.
+    :return xy:         a list of [x, y] coordinates represents points casted on the surface.
+    """
+
+    assert isinstance(polygon, np.ndarray) and np.shape(polygon)[1] == 2
+    assert isinstance(n_points, int) and n_points > 0
+
+    # work out x and y boundary
     x1, x2 = np.min(polygon[:, 0]), np.max(polygon[:, 0])
     y1, y2 = np.min(polygon[:, 1]), np.max(polygon[:, 1])
 
-    domain_area = (x2 - x1) * (y2 - y1)
-
+    # the total area within the polygon
     poly_area = polygon_area_2d(polygon[:, 0], polygon[:, 1])
 
+    # the area within the square that contains the polygon
+    domain_area = (x2 - x1) * (y2 - y1)
+
+    # reworked total points within the square
     n_points *= (domain_area / poly_area)
     n_points = int(n_points) + 1
 
+    # area of each points on the square surface
     a = domain_area / n_points
 
     l = a ** 0.5
@@ -45,12 +73,12 @@ def scatter_in_polygon_2d(polygon: np.ndarray, n_points):
     yy = np.linspace(y1, y2, int((y2 - y1) / l) + 1, endpoint=True, dtype=np.float64)
 
     xx, yy = np.meshgrid(xx, yy)
+    xx, yy = xx.flatten().reshape(xx.size, 1), yy.flatten().reshape(yy.size, 1)
 
-    xx = xx.flatten().reshape(xx.size, 1)
-
-    yy = yy.flatten().reshape(yy.size, 1)
-
+    # get the points co-ordinates within the polygon
+    path = Path(polygon)
     xy = np.concatenate([xx, yy], axis=1)
+    xy = xy[path.contains_points(xy)]
 
     return xy
 
@@ -68,9 +96,44 @@ def test_scatter_in_polygon_2d():
 
     xy = scatter_in_polygon_2d(polygon, 1000)
 
-    points_in_polygon_ = points_in_polygon_2d(xy, polygon)
+    print(xy)
 
-    print(np.sum(points_in_polygon_))
+
+def scatter_in_polygon_3d(polygon: np.ndarray, n_points: int) -> np.ndarray:
+    """WIP. Cast n_points number of points on a surface, within a defined polygon, in 3 dimensional space. As WIP, the
+    third dimension will be discarded.
+
+    :param polygon:
+    :param n_points:
+    :return:
+    """
+
+    z_averaged = np.average(polygon[:, 2])
+
+    xy = scatter_in_polygon_2d(polygon[:, 0:2], n_points)
+
+    xyz = np.c_[xy, np.full(np.shape(xy)[0], z_averaged)]
+
+    return xyz
+
+
+def test_scatter_in_polygon_3d():
+    # points = np.random.uniform(low=-2, high=12, size=10000).reshape(5000, 2)
+
+    x = [0, 10, 10, 6, 10, 4, 0]
+    y = [0, 0, 5, 5, 10, 10, 6]
+    z = [2, 2, 2, 2, 2, 2, 2]
+
+    xyz = list(zip(x, y, z))
+
+    xyz = [list(i) for i in xyz]
+    polygon = np.array(xyz)
+
+    xy = scatter_in_polygon_3d(polygon, 1000)
+
+    print(xy)
+
+test_scatter_in_polygon_3d()
 
 
 def unit_vector(vector: np.ndarray):
@@ -319,7 +382,6 @@ def single_receiver(
     ep_xyz_area = None
     for i, p in enumerate(ep):
         xyz_ = scatter_in_polygon_3d(polygon=p, n_points=n_points)
-        xyz_ = points_in_polygon_2d(xy, polygon)
 
         norm_ = np.zeros_like(xyz_)
         temperature_ = np.zeros(shape=(len(xyz_),))
@@ -379,4 +441,6 @@ if __name__ == '__main__':
     # test_scatter_in_polygon_2d()
 
     # print(heat_flux_to_temperature(84000, 293.15))
-    test_single_receiver()
+    # test_single_receiver()
+
+    pass
