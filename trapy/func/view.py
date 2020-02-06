@@ -29,13 +29,9 @@ def polygon_area_3d(polygon: np.ndarray) -> np.ndarray:
     :return:
     """
 
-    z_averaged = np.average(polygon[:, 2])
+    area = polygon_area_2d(polygon[:, 0], polygon[:, 1])
 
-    xy = polygon_area_2d(polygon[:, 0], polygon[:, 1])
-
-    xyz = np.c_[xy, np.full(np.shape(xy)[0], z_averaged)]
-
-    return xyz
+    return area
 
 
 def scatter_in_polygon_2d(polygon: np.ndarray, n_points: int) -> np.ndarray:
@@ -72,13 +68,21 @@ def scatter_in_polygon_2d(polygon: np.ndarray, n_points: int) -> np.ndarray:
     xx = np.linspace(x1, x2, int((x2 - x1) / l) + 1, endpoint=True, dtype=np.float64)
     yy = np.linspace(y1, y2, int((y2 - y1) / l) + 1, endpoint=True, dtype=np.float64)
 
+    xx -= xx[1] - xx[0]
+    yy -= yy[1] - yy[0]
+
     xx, yy = np.meshgrid(xx, yy)
-    xx, yy = xx.flatten().reshape(xx.size, 1), yy.flatten().reshape(yy.size, 1)
+    xx = xx.flatten()
+    xx = xx.reshape((xx.size, 1))
+    yy = yy.flatten()
+    yy = yy.reshape((yy.size, 1))
+    # xx, yy = xx.flatten().reshape(xx.size, 1), yy.flatten().reshape(yy.size, 1)
 
     # get the points co-ordinates within the polygon
     path = Path(polygon)
     xy = np.concatenate([xx, yy], axis=1)
-    xy = xy[path.contains_points(xy)]
+    xy_filter_inside_the_polygon = path.contains_points(xy)
+    xy = xy[xy_filter_inside_the_polygon]
 
     return xy
 
@@ -100,8 +104,8 @@ def test_scatter_in_polygon_2d():
 
 
 def scatter_in_polygon_3d(polygon: np.ndarray, n_points: int) -> np.ndarray:
-    """WIP. Cast n_points number of points on a surface, within a defined polygon, in 3 dimensional space. As WIP, the
-    third dimension will be discarded.
+    """WIP. Cast n_points number of points on a surface, within a defined polygon, in 3 dimensional space.
+    As WIP, the third dimension will be discarded but returned as orginal inputs.
 
     :param polygon:
     :param n_points:
@@ -132,8 +136,6 @@ def test_scatter_in_polygon_3d():
     xy = scatter_in_polygon_3d(polygon, 1000)
 
     print(xy)
-
-test_scatter_in_polygon_3d()
 
 
 def unit_vector(vector: np.ndarray):
@@ -322,88 +324,118 @@ def test_phi_parallel():
         indexes=indexes
     )
 
-    assert np.allclose(0.1385316, np.sum(p))
+    p_sum = np.sum(p)
+
+    from trapy.func.vis import plot_3d_plotly
+    my_fig = plot_3d_plotly(xyz[:, 0], xyz[:, 1], xyz[:, 2], p)
+    my_fig.show()
+
+    assert np.allclose(0.1385316, p_sum)
 
 
 def test_single_receiver():
-    ep = [
-        [
-            [-0.05, -0.05, 0.25],
-            [0.05, -0.05, 0.25],
-            [0.05, 0.05, 0.25],
-            [-0.5, 0.05, 0.25],
-        ],
-    ]
-    ep_norm = [
-        [0, 0, -1],
-    ]
-    ep_temperature = [
-        [1104.],
-    ]
+    """
+    Emitter panel:
+        - dimension         5 x 5 m
+        - location          5 m above z=0
+        - orientation       (0, 0, -1)
+        - temperature       1153 K (equivalent to 100 kW/m2)
+    Receiver spot:
+        - location          5 meters away from the emitter and center to the emitter
+        - orientation       (0, 0, 1)
+        - temperature       293.15 K (20 deg.C)
+    """
 
-    n_points = 36
+    # Define Emitter Panel
+    # ====================
 
-    rp = [[0, 0, 0]]
-    rp_norm = [[0, 0, 1]]
-    rp_temperature = [293.15]
+    # dimension
+    ep = np.asarray([
+        [0, 0, 5],
+        [0, 5, 5],
+        [5, 5, 5],
+        [5, 0, 5],
+    ])
+
+    # orientation
+    ep_norm = np.asarray([0, 0, -1])
+
+    # surface temperature
+    ep_temperature = [1153.]  # equivalent to 100 kW/m2
+
+    # Define Receiver
+    # ===============
+
+    # location
+    rp = np.asarray([2.5, 2.5, 0])
+
+    # orientation
+    rp_norm = np.asarray([0, 0, 1])
+
+    # temperature
+    rp_temperature = 293.15
 
     single_receiver(
-        ep=ep,
+        ep_vertices=ep,
         ep_norm=ep_norm,
         ep_temperature=ep_temperature,
-        n_points=n_points,
-        rp=rp,
+        n_points=1000,  # number of hot spots
+        rp_vertices=rp,
         rp_norm=rp_norm,
         rp_temperature=rp_temperature
     )
 
 
 def single_receiver(
-        ep: list,
-        ep_norm: list,
-        ep_temperature: list,
+        ep_vertices: np.ndarray,
+        ep_norm: np.ndarray,
+        ep_temperature: float,
         n_points: int,
-        rp: list,
-        rp_norm: list,
-        rp_temperature: list
+        rp_vertices: np.ndarray,
+        rp_norm: np.ndarray,
+        rp_temperature: float
 ):
-    """
+    """Calculates resultant heat flux at a receiver from an emitter.
 
-    :param ep: list of emitter polygon/panel
-    :param rp: coordinate of the receiver point shape (3,)
+    :param ep_vertices: vertices defining an emitter polygon, in [[x1, y1, z1], [x2, y2, z2], ...]
+    :param ep_norm: a vector definiting the facing direction of the emitter polygon, in [x, y, z]
+    :param ep_temperature: [K] emitter surface temperature.
+    :param n_points:
+    :param rp_vertices:
+    :param rp_norm:
+    :param rp_temperature:
     :return:
     """
 
-    ep = np.asarray(ep)
+    global_vertices = np.asarray(ep_vertices)
 
-    ep_xyz = None  # coordinates of sample points on emitter polygons
+    ep_xyz = None  # coordinates of sampled points on emitter polygons
     ep_xyz_norm = None
     ep_xyz_temperature = None
     ep_xyz_area = None
-    for i, p in enumerate(ep):
-        xyz_ = scatter_in_polygon_3d(polygon=p, n_points=n_points)
 
-        norm_ = np.zeros_like(xyz_)
-        temperature_ = np.zeros(shape=(len(xyz_),))
+    # Process Data for Emitter Panel
+    # ==============================
 
-        if ep_xyz:
-            raise ValueError('multiple emitter panel feature is currently not supported.')
-            # ep_xyz = np.concatenate([ep_xyz, xyz_])
-        else:
-            ep_xyz = xyz_
-            ep_xyz_norm = np.zeros_like(xyz_, dtype=np.float64)
-            ep_xyz_norm[:, :] = ep_norm[i]
-            ep_xyz_temperature = np.zeros(shape=(len(xyz_),), dtype=np.float64)
-            ep_xyz_temperature[:] = ep_temperature[i]
-            ep_xyz_area = np.zeros((np.shape(xyz_)[0],), dtype=np.float64)
-            ep_xyz_area[:] = polygon_area_3d(p[:, 0], p[:, 1], p[:, 2]) / ep_xyz_area.size
+    # Get coordinates of individual hot spots
+    ep_xyz_spots = scatter_in_polygon_3d(polygon=ep_vertices, n_points=n_points)
+
+    # Get norm of individual hot spots
+    norm_ = np.zeros_like(ep_xyz_spots)
+    ep_xyz_norm = np.zeros_like(ep_xyz_spots, dtype=np.float64)
+    ep_xyz_norm[:, :] = ep_norm
+
+    # Get temperature of individual hot spots
+    ep_xyz_temperature = np.full(shape=(len(ep_xyz_spots),), fill_value=ep_temperature, dtype=np.float64)
+
+    ep_xyz_area = np.full(shape=np.shape(ep_xyz_spots)[0], fill_value=polygon_area_3d(ep_vertices) / np.shape(ep_xyz_spots)[0], dtype=np.float64)
 
     n_points = ep_xyz_area.size
 
-    # add the single hot spot (i.e. receiver)
-    ep_xyz = np.concatenate([np.array(rp), ep_xyz])
-    ep_xyz_norm = np.concatenate([np.array(rp_norm), ep_xyz_norm])
-    ep_xyz_temperature = np.concatenate([rp_temperature, ep_xyz_temperature])
+    # add the single cold spot (i.e. receiver)
+    ep_xyz = np.concatenate([np.reshape(rp_vertices, (1, rp_vertices.size)), ep_xyz_spots])
+    ep_xyz_norm = np.concatenate([np.reshape(rp_norm, (1, rp_norm.size)), ep_xyz_norm])
+    ep_xyz_temperature = np.concatenate([[rp_temperature], ep_xyz_temperature])
     ep_xyz_area = np.concatenate([[1], ep_xyz_area])
 
     indexes = np.zeros((n_points, 2), dtype=int)
@@ -421,26 +453,53 @@ def single_receiver(
     print('heat flux', np.sum(res)/1000)
     print('phi', np.sum(phi_))
 
-    from trapy.func.vis import plot_3d_plotly
-    my_fig = plot_3d_plotly(ep_xyz[:, 0], ep_xyz[:, 1], ep_xyz[:, 2], phi_)
-    my_fig.show()
+    # from trapy.func.vis import plot_3d_plotly
+    # my_fig = plot_3d_plotly(ep_xyz[:, 0], ep_xyz[:, 1], ep_xyz[:, 2], phi_)
+    # my_fig.show()
     return res, phi_
 
 
-def heat_flux_to_temperature(heat_flux, exposed_temperature=293.15):
+def heat_flux_to_temperature(heat_flux: float, exposed_temperature:float = 293.15):
+    """Function returns surface temperature of an emitter for a given heat flux.
+
+    :param heat_flux: [W/m2] heat flux of emitter.
+    :param exposed_temperature: [K] ambient/receiver temperature, 20 deg.C by default.
+    :return temperature: [K] calculated emitter temperature based on black body radiation model.
+    """
+    epsilon = 1.0  # radiation view factor
+    sigma = 5.67e-8  # [W/m2/K4] stefan-boltzmann constant
     # E_dash_dash_dot = epsilon * sigma * (T_1 ** 4 - T_0 ** 4)  # [W/m2]
-    return ((heat_flux/5.67e-8)+exposed_temperature**4) ** 0.25
+    return ((heat_flux / sigma / epsilon) + exposed_temperature ** 4) ** 0.25
+
+
+def temperature_to_heat_flux(temperature: float, ambient_temperature: float = 293.15):
+    """Function returns hot surface heat flux for a given temperature.
+
+    :param temperature: [K] emitter temperature.
+    :param ambient_temperature: [K] ambient/receiver temperature, 20 deg.C by default.
+    :return heat_flux: [K] calculated emitter temperature based on black body radiation model.
+    """
+
+    epsilon = 1.0  # radiation view factor
+    sigma = 5.67e-8  # [W/m2/K4] stefan-boltzmann constant
+
+    heat_flux = epsilon * sigma * (temperature ** 4 - ambient_temperature ** 4)
+
+    return heat_flux
 
 
 if __name__ == '__main__':
+
     # test_angle_between()
     # test_phi_parallel()
     # test_phi_perpendicular()
     # test_poly_area_2d()
-    #
+
     # test_scatter_in_polygon_2d()
 
     # print(heat_flux_to_temperature(84000, 293.15))
-    # test_single_receiver()
+    # print(heat_flux_to_temperature(100000))
+
+    test_single_receiver()
 
     pass
